@@ -16,10 +16,10 @@
 # License: BSL-1.0
 # https://github.com/yurablok/fods_minimizer
 # History:
-# v1.0 2024-Jun-12     First release.
+# v1.1   2025-Dec-04    Added preserving of `table:formula`.
+# v1.0   2024-Jun-12    First release.
 
 import os, io
-import xml.etree.ElementTree as ET
 import xml.dom.minidom
 import xml.sax.saxutils
 import hashlib
@@ -117,9 +117,15 @@ for _, _, fileNames in os.walk("."):
                         return
 
                 if name == "office:document":
+                    filtered = {}
                     for item in attrs.items():
-                        if item[0].startswith("xmlns:"):
-                            ET.register_namespace(item[0][6:], item[1])
+                        if item[0].startswith("xmlns:") and not item[0][6:] in {
+                                "config", "meta", "office", "ooo", "script", "style",
+                                "table", "text", "of"
+                            }:
+                            continue
+                        filtered[item[0]] = item[1]
+                    attrs = filtered
                 # </office:styles>
                 #
                 # <style:style style:name="co???" style:family="table-column">
@@ -171,15 +177,23 @@ for _, _, fileNames in os.walk("."):
                     numberColumnsRepeated = ""
                     if "table:number-columns-repeated" in attrs:
                         numberColumnsRepeated = attrs["table:number-columns-repeated"]
+
                     styleName = ""
                     if "table:style-name" in attrs \
                             and attrs["table:style-name"] in self.nameToCode:
                         styleName = self.nameToCode[attrs["table:style-name"]]
+
+                    tableFormula = ""
+                    if "table:formula" in attrs:
+                        tableFormula = attrs["table:formula"]
+
                     attrs = {}
                     if len(numberColumnsRepeated):
                         attrs["table:number-columns-repeated"] = numberColumnsRepeated
                     if len(styleName):
                         attrs["table:style-name"] = styleName
+                    if len(tableFormula):
+                        attrs["table:formula"] = tableFormula
 
                 if not stack[stackIdx - 1]:
                     #stack.append(False)
@@ -268,7 +282,7 @@ for _, _, fileNames in os.walk("."):
 
         print(f"countStart={countStart} countChars={countChars} countEnd={countEnd} stackMax={stackMax}")
 
-        dom = ET.ElementTree(ET.fromstring(buffer.getvalue()))
-        ET.indent(dom, space=" ", level=0)
-        #dom.write("_" + fileName, encoding="UTF-8", xml_declaration=True)
-        dom.write(fileName, encoding="UTF-8", xml_declaration=True)
+        buffer = xml.dom.minidom.parseString(buffer.getvalue()).toprettyxml(indent=" ")
+        buffer = "\n".join(filter(str.strip, buffer.splitlines()))
+        with open(fileName, "w", encoding="utf-8") as f:
+            f.write(buffer)

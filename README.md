@@ -34,8 +34,9 @@ Let's look at the available Spreadsheets formats, without counting of formats wi
 | :----- | :------- | :------- | :---------- | :----
 | FODS   | **text** | **yes**  | **yes**     | Contains a lot of excess meta-information
 | HTML   | **text** | no       | **yes**     | If the document contains several tables, _LibreOffice Calc_ doesn't want to open it
+| Markdown | **text** | no     | yes*        | Excellent for docs and Git. Styling requires embedded HTML tags. It's hard to find a sufficiently functional spreadsheet editor
 | CSV    | **text** | no       | no          | The easiest parsing format
-| SLK    | **text** | no       | no          |
+| SLK    | **text** | no*      | no*         | Deprecated. _LibreOffice Calc_ has only minimal support
 | ODS    | binary   | **yes**  | **yes**     |
 | XLSX   | binary   | **yes**  | **yes**     |
 | XLS    | binary   | **yes**  | **yes**     | The most difficult parsing format
